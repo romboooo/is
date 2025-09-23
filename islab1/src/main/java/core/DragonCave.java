@@ -6,4 +6,9 @@ public class DragonCave {
     public DragonCave(int numberOfTreasures) {
         this.numberOfTreasures = numberOfTreasures;
     }
+
+    @Override
+    public String toString() {
+        return "DragonCave [number of treasures=" + numberOfTreasures + "]";
+    }
 }

@@ -16,4 +16,18 @@ public class Person {
         this.passportID = passportID;
         this.nationality = nationality;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Person {");
+        sb.append("name=" + name);
+        sb.append("eyeColor=" + eyeColor);
+        sb.append("hairColor=" + hairColor);
+        sb.append("location=" + location.toString());
+        sb.append("passportID=" + passportID);
+        sb.append("nationality=" + nationality);
+        sb.append("}");
+        return sb.toString();
+    }
 }
