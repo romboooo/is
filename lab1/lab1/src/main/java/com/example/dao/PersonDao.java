@@ -9,7 +9,7 @@ import java.util.List;
 @Stateless
 public class PersonDao {
 
-    @PersistenceContext(unitName = "myPU") // Явно указываем имя persistence unit
+    @PersistenceContext(unitName = "myPU")
     private EntityManager entityManager;
 
     public Person findById(Long id) {

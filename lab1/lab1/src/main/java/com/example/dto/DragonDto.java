@@ -17,11 +17,9 @@ public class DragonDto {
     private DragonCave cave;
     private Person killer;
 
-//    @Positive(message = "Age must be greater than 0")
     private int age;
 
     @NotNull(message = "Weight cannot be null")
-//    @Positive(message = "Weight must be greater than 0")
     private Float weight;
 
     private Color color;

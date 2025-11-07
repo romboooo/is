@@ -51,7 +51,6 @@ public class DragonService {
     public DragonDto save(@Valid DragonDto dragonDto) {
         Dragon dragon = convertToEntity(dragonDto);
 
-        // Если указан убийца, связываем с существующей Person
         if (dragonDto.getKiller() != null && dragonDto.getKiller().getId() != null) {
             Person killer = personDao.findById(dragonDto.getKiller().getId());
             dragon.setKiller(killer);
@@ -64,10 +63,7 @@ public class DragonService {
     public void delete(Long id, Long newKillerId) {
         Dragon dragon = dragonDao.findById(id);
         if (dragon != null) {
-            // Если есть связанные объекты и указан новый убийца
             if (newKillerId != null) {
-                // Здесь логика перепривязки связанных объектов
-                // Например, если другие драконы ссылаются на этого как убийцу
                 List<Dragon> relatedDragons = dragonDao.findAll().stream()
                         .filter(d -> d.getKiller() != null && d.getKiller().getId().equals(id))
                         .collect(Collectors.toList());

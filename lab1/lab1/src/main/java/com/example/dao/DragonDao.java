@@ -15,10 +15,9 @@ import java.util.Map;
 @Stateless
 public class DragonDao {
 
-    @PersistenceContext(unitName = "myPU") // Явно указываем имя persistence unit
+    @PersistenceContext(unitName = "myPU")
     private EntityManager entityManager;
 
-    // остальной код без изменений...
     public Dragon findById(Long id) {
         return entityManager.find(Dragon.class, id);
     }
@@ -33,7 +32,13 @@ public class DragonDao {
                 .setMaxResults(size)
                 .getResultList();
     }
-
+    public boolean existsByKillerId(Long killerId) {
+        TypedQuery<Long> query = entityManager.createQuery(
+                "SELECT COUNT(d) FROM Dragon d WHERE d.killer.id = :killerId", Long.class);
+        query.setParameter("killerId", killerId);
+        Long count = query.getSingleResult();
+        return count > 0;
+    }
     public List<Dragon> findWithFilters(Map<String, Object> filters, int page, int size, String sortBy, String sortOrder) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Dragon> query = cb.createQuery(Dragon.class);
@@ -104,7 +109,6 @@ public class DragonDao {
         }
     }
 
-    // Специальные операции
     public Long getSumOfAges() {
         return entityManager.createQuery("SELECT SUM(d.age) FROM Dragon d", Long.class)
                 .getSingleResult();

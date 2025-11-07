@@ -1,5 +1,6 @@
 package com.example.service;
 
+import com.example.dao.DragonDao;
 import com.example.dao.PersonDao;
 import com.example.dto.PersonDto;
 import com.example.entity.Person;
@@ -17,6 +18,9 @@ public class PersonService {
 
     @Inject
     private PersonDao personDao;
+
+    @Inject
+    private DragonDao dragonDao; // Добавляем DragonDao для проверки зависимостей
 
     public PersonDto findById(Long id) {
         Person person = personDao.findById(id);
@@ -36,6 +40,13 @@ public class PersonService {
     }
 
     public void delete(Long id) {
+        boolean hasDragonReferences = dragonDao.existsByKillerId(id);
+
+        if (hasDragonReferences) {
+            throw new RuntimeException("Cannot delete person with id " + id +
+                    " because there are dragons that reference this person as their killer.");
+        }
+
         personDao.delete(id);
     }
 
@@ -51,7 +62,6 @@ public class PersonService {
         return person;
     }
 
-    // Дополнительные методы для бизнес-логики
 
     public List<PersonDto> findByName(String name) {
         return personDao.findAll().stream()

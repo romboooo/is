@@ -56,7 +56,7 @@ public class Dragon {
         this.coordinates = coordinates;
         this.age = age;
         this.weight = weight;
-        this.creationDate = LocalDateTime.now(); // Устанавливаем дату вручную
+        this.creationDate = LocalDateTime.now();
     }
 
     @PrePersist
@@ -66,7 +66,6 @@ public class Dragon {
         }
     }
 
-    // Геттеры и сеттеры остаются без изменений
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

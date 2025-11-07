@@ -281,36 +281,41 @@
         }
 
         container.innerHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Age</th>
-                            <th>Weight</th>
-                            <th>Color</th>
-                            <th>Character</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${dragons.map(dragon => `
-                            <tr>
-                                <td>${dragon.id}</td>
-                                <td>${dragon.name}</td>
-                                <td>${dragon.age}</td>
-                                <td>${dragon.weight}</td>
-                                <td>${dragon.color || '-'}</td>
-                                <td>${dragon.character || '-'}</td>
-                                <td>
-                                    <button onclick="editDragon(${dragon.id})">Edit</button>
-                                    <button onclick="deleteDragon(${dragon.id})">Delete</button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Weight</th>
+                    <th>Color</th>
+                    <th>Character</th>
+                    <th>Killer ID</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${dragons.map(dragon => `
+                    <tr>
+                        <td>${dragon.id}</td>
+                        <td>${dragon.name}</td>
+                        <td>${dragon.age}</td>
+                        <td>${dragon.weight}</td>
+                        <td>${dragon.color || '-'}</td>
+                        <td>${dragon.character || '-'}</td>
+                        <td>${dragon.killer ? dragon.killer.id : 'None'}</td>
+                        <td>
+                            <button onclick="editDragon(${dragon.id})">Edit</button>
+                            <button onclick="deleteDragon(${dragon.id})"
+                                    ${dragon.killer ? 'disabled style="opacity: 0.5;" title="Cannot delete - this dragon has a killer"' : ''}>
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
     }
 
     function updatePagination(total, pageSize, currentPage) {
@@ -413,16 +418,24 @@
     }
 
     async function deleteDragon(id) {
-        if (!confirm('Are you sure you want to delete this dragon?')) return;
-
         try {
-            const response = await fetch(`${API_BASE}/dragons/${id}`, { method: 'DELETE' });
-            if (response.ok) {
+            const response = await fetch(`${API_BASE}/dragons/${id}`);
+            const dragon = await response.json();
+
+            if (dragon.killer) {
+                alert('Cannot delete this dragon because it has a killer assigned.');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete this dragon?')) return;
+
+            const deleteResponse = await fetch(`${API_BASE}/dragons/${id}`, { method: 'DELETE' });
+            if (deleteResponse.ok) {
                 showMessage('dragonMessage', 'Dragon deleted successfully!', 'success');
                 loadDragons(currentDragonPage);
             } else {
-                const error = await response.json();
-                showMessage('dragonMessage', `Error: ${error.error || response.statusText}`, 'error');
+                const error = await deleteResponse.json();
+                showMessage('dragonMessage', `Error: ${error.error || deleteResponse.statusText}`, 'error');
             }
         } catch (error) {
             showMessage('dragonMessage', 'Error deleting dragon: ' + error.message, 'error');
@@ -437,7 +450,6 @@
         document.getElementById('dragonMessage').innerHTML = '';
     }
 
-    // ===== PERSON FUNCTIONS =====
     async function loadPersons() {
         try {
             const response = await fetch(`${API_BASE}/persons`);
@@ -449,44 +461,67 @@
         }
     }
 
-    function displayPersons(persons) {
+    async function displayPersons(persons) {
         const container = document.getElementById('personsList');
         if (!persons || persons.length === 0) {
             container.innerHTML = '<p>No persons found</p>';
             return;
         }
 
+        // Загружаем всех драконов чтобы проверить связи
+        const dragonsResponse = await fetch(`${API_BASE}/dragons?size=1000`);
+        const dragonsResult = await dragonsResponse.json();
+        const allDragons = dragonsResult.data || [];
+
+        // Проверяем для каждого человека, является ли он киллером какого-либо дракона
+        const personsWithKillerStatus = persons.map(person => {
+            // Ищем дракона, у которого killer_id совпадает с id человека
+            const isKiller = allDragons.some(dragon =>
+                dragon.killer && dragon.killer.id === person.id
+            );
+
+            return {
+                ...person,
+                isKiller: isKiller
+            };
+        });
+
         container.innerHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Eye Color</th>
-                            <th>Hair Color</th>
-                            <th>Passport ID</th>
-                            <th>Nationality</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${persons.map(person => `
-                            <tr>
-                                <td>${person.id}</td>
-                                <td>${person.name}</td>
-                                <td>${person.eyeColor || '-'}</td>
-                                <td>${person.hairColor}</td>
-                                <td>${person.passportID}</td>
-                                <td>${person.nationality || '-'}</td>
-                                <td>
-                                    <button onclick="editPerson(${person.id})">Edit</button>
-                                    <button onclick="deletePerson(${person.id})">Delete</button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Eye Color</th>
+                    <th>Hair Color</th>
+                    <th>Passport ID</th>
+                    <th>Nationality</th>
+                    <th>Is Killer</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${personsWithKillerStatus.map(person => `
+                    <tr>
+                        <td>${person.id}</td>
+                        <td>${person.name}</td>
+                        <td>${person.eyeColor || '-'}</td>
+                        <td>${person.hairColor}</td>
+                        <td>${person.passportID}</td>
+                        <td>${person.nationality || '-'}</td>
+                        <td>${person.isKiller ? 'Yes' : 'No'}</td>
+                        <td>
+                            <button onclick="editPerson(${person.id})">Edit</button>
+                            <button onclick="deletePerson(${person.id})"
+                                    ${person.isKiller ? 'disabled style="opacity: 0.5;"' : ''}>
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
     }
 
     document.getElementById('personForm').addEventListener('submit', async (e) => {
@@ -555,9 +590,22 @@
     }
 
     async function deletePerson(id) {
-        if (!confirm('Are you sure you want to delete this person?')) return;
-
         try {
+            const dragonsResponse = await fetch(`${API_BASE}/dragons?size=1000`);
+            const dragonsResult = await dragonsResponse.json();
+            const allDragons = dragonsResult.data || [];
+
+            const isKiller = allDragons.some(dragon =>
+                dragon.killer && dragon.killer.id === id
+            );
+
+            if (isKiller) {
+                alert('Cannot delete this person because they are the killer of one or more dragons.');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete this person?')) return;
+
             const response = await fetch(`${API_BASE}/persons/${id}`, { method: 'DELETE' });
             if (response.ok) {
                 showMessage('personMessage', 'Person deleted successfully!', 'success');

@@ -8,6 +8,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Map;
 
 @Path("/persons")
 @Produces(MediaType.APPLICATION_JSON)
@@ -35,22 +36,40 @@ public class PersonResource {
 
     @POST
     public Response createPerson(@Valid PersonDto personDto) {
-        PersonDto created = personService.save(personDto);
-        return Response.status(Response.Status.CREATED).entity(created).build();
+        try {
+            PersonDto created = personService.save(personDto);
+            return Response.status(Response.Status.CREATED).entity(created).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage()))
+                    .build();
+        }
     }
 
     @PUT
     @Path("/{id}")
     public Response updatePerson(@PathParam("id") Long id, @Valid PersonDto personDto) {
-        personDto.setId(id);
-        PersonDto updated = personService.save(personDto);
-        return Response.ok(updated).build();
+        try {
+            personDto.setId(id);
+            PersonDto updated = personService.save(personDto);
+            return Response.ok(updated).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage()))
+                    .build();
+        }
     }
 
     @DELETE
     @Path("/{id}")
     public Response deletePerson(@PathParam("id") Long id) {
-        personService.delete(id);
-        return Response.noContent().build();
+        try {
+            personService.delete(id);
+            return Response.noContent().build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(Map.of("error", e.getMessage()))
+                    .build();
+        }
     }
 }
